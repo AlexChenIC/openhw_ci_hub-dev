@@ -1,0 +1,72 @@
+# ============================================================================
+# CVA6 Thin Wrapper — Tier 1 PR Gate
+# ============================================================================
+#
+# INSTRUCTIONS:
+#   1. Copy this file to your CVA6 fork:
+#        AlexChenIC/cva6/.github/workflows/tier1.yml
+#
+#   2. Replace AlexChenIC with your GitHub username everywhere.
+#
+#   3. Merge to master (or default branch) BEFORE opening test PRs —
+#      GitHub only fires PR triggers for workflows on the default branch.
+#
+# WHAT THIS DOES:
+#   Calls the shared Tier 1 workflow in AlexChenIC/ci-hub for each of the
+#   three active CVA6 configurations. All CI logic lives in ci-hub; this
+#   file contains only configuration (what to run, not how).
+#
+# JOB RUNTIME TARGET: ≤ 15 minutes wall-clock per job.
+# ============================================================================
+
+name: CVA6 Tier1 PR Gate
+
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+  workflow_dispatch:          # Allow manual trigger for testing
+
+concurrency:
+  group: cva6-tier1-${{ github.ref }}
+  cancel-in-progress: true    # Cancel previous run if a new commit is pushed
+
+jobs:
+
+  # ── cv32a65x — RV32 dual-issue, ISA: rv32imc_zba_zbb_zbs_zbc ─────────
+  tier1-cv32a65x:
+    uses: "AlexChenIC/ci-hub/.github/workflows/riscv-tier1.yml@main"   # TODO: replace AlexChenIC
+    with:
+      arch:     "RV32"
+      target:   "cv32a65x"
+      testcase: "smoke-tests-cv32a65x"
+      mode:     "script"
+      simulator: "veri-testharness,spike"
+    secrets: inherit
+
+  # ── cv32a60x — RV32 single-issue, ISA: rv32imc_zba_zbb_zbs_zbc ──────
+  tier1-cv32a60x:
+    uses: "AlexChenIC/ci-hub/.github/workflows/riscv-tier1.yml@main"   # TODO: replace AlexChenIC
+    with:
+      arch:     "RV32"
+      target:   "cv32a60x"
+      testcase: "dv-riscv-arch-test"
+      mode:     "testlist"
+      simulator: "veri-testharness,spike"
+      install-script: "install-riscv-arch-test"
+      testlist: "../tests/testlist_riscv-arch-test-cv32a60x.yaml"
+      test-name: "rv32im-cadd-01"
+      linker:   "../tests/riscv-arch-test/riscv-target/spike/link.ld"
+    secrets: inherit
+
+  # ── cv64a6_imafdc_sv39_hpdcache_wb — RV64, SV39, HPDcache-WB ─────────
+  tier1-cv64-hpdcache:
+    uses: "AlexChenIC/ci-hub/.github/workflows/riscv-tier1.yml@main"   # TODO: replace AlexChenIC
+    with:
+      arch:     "RV64"
+      target:   "cv64a6_imafdc_sv39_hpdcache_wb"
+      testcase: "cv64a6_imafdc_tests"
+      mode:     "script"
+      simulator: "veri-testharness,spike"
+    secrets: inherit

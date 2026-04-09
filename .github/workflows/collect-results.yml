@@ -1,0 +1,94 @@
+# Copyright 2026 OpenHW Group
+# SPDX-License-Identifier: Apache-2.0
+#
+# ============================================================================
+# Workflow: Collect CI Results from All Monitored Repositories
+# ============================================================================
+#
+# PURPOSE:
+#   Polls the GitHub Actions API for all repositories listed in
+#   config/repos.yml, collects workflow run/job data, and persists
+#   it to the gh-pages-ci-hub branch for historical tracking.
+#   Triggers the dashboard deployment after successful collection.
+#
+# SCHEDULE: Every 2 hours (adjust as needed)
+# ============================================================================
+
+name: collect-results
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'    # Every 2 hours
+  workflow_dispatch:           # Manual trigger for testing / initial setup
+
+permissions:
+  contents: write              # push data to gh-pages-ci-hub
+  actions: read                # read workflow run data via API
+
+concurrency:
+  group: collect-results
+  cancel-in-progress: false    # Never cancel — always complete a collection cycle
+
+jobs:
+  collect:
+    name: Collect CI Data
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── Checkout ci-hub repo (for scripts and config) ─────────────────────
+      - name: Checkout ci-hub
+        uses: actions/checkout@v4
+        with:
+          path: ci-hub
+
+      # ── Restore persistent data from gh-pages-ci-hub branch ───────────────
+      - name: Restore data store
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages-ci-hub
+          path: data-store
+        continue-on-error: true   # Branch may not exist on first run
+
+      - name: Initialise data store (first run)
+        run: |
+          if [ ! -d data-store ]; then
+            mkdir -p data-store/data
+            cd data-store
+            git init
+            git remote add origin "https://github.com/${{ github.repository }}.git"
+          fi
+
+      # ── Install Python dependencies ────────────────────────────────────────
+      - name: Install Python dependencies
+        run: pip install pyyaml
+
+      # ── Collect data from all repos ────────────────────────────────────────
+      - name: Collect CI data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 ci-hub/.github/scripts/collect_all_repos.py \
+            --repos-config ci-hub/config/repos.yml \
+            --data-dir data-store/data \
+            --fetch-count 10
+
+      # ── Persist updated data ───────────────────────────────────────────────
+      - name: Commit and push data
+        run: |
+          cd data-store
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet && echo "No new data" && exit 0
+          git commit -m "ci: update data $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
+            HEAD:gh-pages-ci-hub --force
+
+      # ── Trigger dashboard deployment ───────────────────────────────────────
+      - name: Trigger dashboard deployment
+        run: |
+          gh workflow run deploy-dashboard.yml \
+            --repo "${{ github.repository }}" \
+            --ref "${{ github.ref }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

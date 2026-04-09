@@ -1,0 +1,152 @@
+# Copyright 2026 OpenHW Group
+# SPDX-License-Identifier: Apache-2.0
+#
+# Composite Action: Setup RISC-V Simulation Environment
+#
+# Handles repository checkout, tool caching, and environment variable setup
+# for RISC-V processor CI jobs. Generalised from CVA6's setup-cva6-env action.
+#
+# All path inputs have defaults matching CVA6's layout so existing CVA6 callers
+# need no changes. Override them for repos with a different tool directory tree.
+
+name: 'Setup RISC-V Environment'
+description: >
+  Checkout repository, cache/restore RISC-V toolchain + Verilator + Spike,
+  and set RISCV / PATH environment variables.
+
+inputs:
+  # ── Tool installation control ──────────────────────────────────────────────
+  install-tools:
+    description: 'Run the setup script when any tool cache misses'
+    required: false
+    default: 'true'
+
+  # ── Tool destination paths (relative to repo root) ────────────────────────
+  toolchain-path:
+    description: 'Installation directory for the RISC-V toolchain'
+    required: false
+    default: 'tools/riscv-toolchain'
+
+  verilator-path:
+    description: 'Installation directory for Verilator'
+    required: false
+    default: 'tools/verilator'
+
+  spike-path:
+    description: 'Installation directory for Spike ISS'
+    required: false
+    default: 'tools/spike'
+
+  # ── Cache key source scripts ───────────────────────────────────────────────
+  toolchain-install-script:
+    description: 'Script whose hash is used as the toolchain cache key'
+    required: false
+    default: 'ci/install-toolchain.sh'
+
+  verilator-install-script:
+    description: 'Script whose hash is used as the Verilator cache key'
+    required: false
+    default: 'verif/regress/install-verilator.sh'
+
+  spike-install-script:
+    description: 'Script whose hash is used as the Spike cache key'
+    required: false
+    default: 'verif/regress/install-spike.sh'
+
+  # ── Submodule used for Spike cache key (leave empty to disable) ───────────
+  spike-submodule-path:
+    description: 'Submodule path whose HEAD hash is appended to Spike cache key'
+    required: false
+    default: 'verif/core-v-verif'
+
+  # ── Tool setup script (runs on any cache miss) ─────────────────────────────
+  setup-script:
+    description: 'Script that installs all tools when called on a cache miss'
+    required: false
+    default: 'ci/setup.sh'
+
+outputs:
+  toolchain-cache-hit:
+    description: 'true if the RISC-V toolchain was restored from cache'
+    value: ${{ steps.cache-toolchain.outputs.cache-hit }}
+  verilator-cache-hit:
+    description: 'true if Verilator was restored from cache'
+    value: ${{ steps.cache-verilator.outputs.cache-hit }}
+  spike-cache-hit:
+    description: 'true if Spike was restored from cache'
+    value: ${{ steps.cache-spike.outputs.cache-hit }}
+
+runs:
+  using: 'composite'
+  steps:
+
+    # ── 1. Checkout caller repository (with all submodules) ──────────────────
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    # ── 2. Capture submodule hash for Spike cache key ─────────────────────────
+    #    Spike is built against core-v-verif; its submodule HEAD must be part
+    #    of the cache key so a submodule update invalidates the cached binary.
+    - name: Get submodule hash for Spike cache key
+      id: submodule-hash
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.spike-submodule-path }}" ] && \
+           [ -d "${{ inputs.spike-submodule-path }}" ]; then
+          hash=$(git -C "${{ inputs.spike-submodule-path }}" rev-parse HEAD 2>/dev/null || echo "none")
+        else
+          hash="none"
+        fi
+        echo "hash=${hash}" >> "$GITHUB_OUTPUT"
+
+    # ── 3. Cache: RISC-V toolchain ────────────────────────────────────────────
+    - name: Cache RISC-V Toolchain
+      id: cache-toolchain
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.toolchain-path }}
+        key: ${{ runner.os }}-toolchain-${{ hashFiles(inputs.toolchain-install-script) }}
+
+    # ── 4. Cache: Verilator ───────────────────────────────────────────────────
+    - name: Cache Verilator
+      id: cache-verilator
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.verilator-path }}
+        key: ${{ runner.os }}-verilator-${{ hashFiles(inputs.verilator-install-script) }}
+
+    # ── 5. Cache: Spike ISS ───────────────────────────────────────────────────
+    - name: Cache Spike ISS
+      id: cache-spike
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.spike-path }}
+        key: >-
+          ${{ runner.os }}-spike-
+          ${{ hashFiles(inputs.spike-install-script) }}-
+          ${{ steps.submodule-hash.outputs.hash }}
+
+    # ── 6. Install tools on cache miss ────────────────────────────────────────
+    - name: Install tools (cache miss)
+      if: >-
+        inputs.install-tools == 'true' && (
+          steps.cache-toolchain.outputs.cache-hit != 'true' ||
+          steps.cache-verilator.outputs.cache-hit != 'true' ||
+          steps.cache-spike.outputs.cache-hit != 'true'
+        )
+      shell: bash
+      run: |
+        set -euo pipefail
+        echo "::group::Installing RISC-V tools"
+        bash "${{ inputs.setup-script }}"
+        echo "::endgroup::"
+
+    # ── 7. Export tool paths as environment variables ─────────────────────────
+    - name: Export environment variables
+      shell: bash
+      run: |
+        echo "RISCV=$(pwd)/${{ inputs.toolchain-path }}" >> "$GITHUB_ENV"
+        echo "$(pwd)/${{ inputs.verilator-path }}/bin"   >> "$GITHUB_PATH"
+        echo "$(pwd)/${{ inputs.spike-path }}/bin"       >> "$GITHUB_PATH"

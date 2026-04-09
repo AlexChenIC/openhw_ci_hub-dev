@@ -1,0 +1,76 @@
+# Copyright 2026 OpenHW Group
+# SPDX-License-Identifier: Apache-2.0
+#
+# ============================================================================
+# Workflow: Build and Deploy CI Dashboard to GitHub Pages
+# ============================================================================
+#
+# PURPOSE:
+#   Reads collected CI data from the gh-pages-ci-hub branch, generates
+#   a static HTML dashboard, and deploys it to GitHub Pages.
+#
+# PREREQUISITES:
+#   • GitHub Pages must be enabled (Settings → Pages → Source: GitHub Actions)
+#   • Data must have been collected by collect-results.yml at least once
+# ============================================================================
+
+name: deploy-dashboard
+
+on:
+  workflow_dispatch:           # Called by collect-results.yml, also manually triggerable
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write              # Required for GitHub Pages deployment action
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false    # Queue deployments; never cancel mid-deploy
+
+jobs:
+  build:
+    name: Build Dashboard
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout ci-hub (scripts + config)
+        uses: actions/checkout@v4
+        with:
+          path: ci-hub
+
+      - name: Restore data store from gh-pages-ci-hub
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages-ci-hub
+          path: data-store
+        continue-on-error: true
+
+      - name: Install Python dependencies
+        run: pip install jinja2 pyyaml
+
+      - name: Generate dashboard HTML
+        run: |
+          mkdir -p site
+          python3 ci-hub/.github/scripts/generate_dashboard.py \
+            --repos-config ci-hub/config/repos.yml \
+            --data-dir     data-store/data \
+            --output-dir   site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

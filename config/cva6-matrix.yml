@@ -1,0 +1,41 @@
+# CVA6 CI Matrix Configuration
+#
+# known_configs: display order in the dashboard matrix (longest first for parser)
+# known_suites:  display order for testcase columns
+#
+# Updated: 2026-04-09
+# Reference: verif/docs/ci-meeting-notes-2026-03-24.md
+
+known_configs:
+  # Active — fully validated with Verilator + Spike tandem
+  - cv64a6_imafdc_sv39_hpdcache_wb   # RV64, SV39, HPDcache-WB
+  - cv32a65x                          # RV32, dual-issue, B-ext, C-ext
+  - cv32a60x                          # RV32, single-issue, B-ext, C-ext
+
+  # Suspended 2026-03-26 (upstream RTL bugs found, awaiting fix)
+  # - cv64a60ax                       # RV64, AXI-128, HPDcache-WT
+
+  # Deferred 2026-03-24 (per Mike Thompson / OpenHW internal meeting)
+  # - cv32a6_ima_sv32_fpga            # FPGA toolchain not on GH Actions
+  # - cv64a6_imafdc_sv39_openpiton    # OpenPiton NOC: custom testbench needed
+  # - cv64a6_imafdch_sv39             # H-ext: test suite not developed
+  # - cv64a6_imafdch_sv39_wb          # H-ext + WB cache: same blocker
+  # - cv64a6_imafdcv_sv39             # V-ext: RVV test suite missing
+
+known_suites:
+  # Tier 1 smoke tests
+  - smoke-tests-cv32a65x
+  - smoke-tests-cv32a60x
+  - cv32a6_tests
+  - cv64a6_imafdc_tests
+
+  # Tier 2 full coverage
+  - dv-riscv-arch-test
+  - dv-riscv-compliance
+  - dv-riscv-tests-v
+  - dv-riscv-tests-p
+  - dv-riscv-csr-access-test
+  - benchmark
+
+  # Proof-of-life (spike-only)
+  - hello-world

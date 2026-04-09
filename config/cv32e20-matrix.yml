@@ -1,0 +1,30 @@
+# CV32E20-DV CI Matrix Configuration
+#
+# STATUS: INCOMPLETE — simulator must be chosen before this file is finalised.
+# See .claude/ideas/openhw-ci-hub/07-cv32e20-integration.md (TODO-A through TODO-F).
+#
+# CV32E20 has a single configuration (cv32e20), so the matrix is one row.
+# Simulator options: dsim-cloud | spike-only | verilator (TBD — see doc above)
+
+known_configs:
+  - cv32e20
+
+known_suites:
+  # Tier 1 — smoke tests (4 directed tests covering main subsystems)
+  - hello_world
+  - interrupt_test
+  - illegal
+  - debug_test
+
+  # Tier 2 — full ci_check (10 tests from regress/cv32e20_ci_check.yaml)
+  - csr_instructions
+  - riscv_ebreak_test
+  - misalign
+  # TODO: add corev-dv random test names once simulator is confirmed
+  # - cv32e20_dv_rand_tests
+  # - cv32e20_dv_rand_pulp
+
+# TODO: fill in after Phase 0 investigation
+simulator: "TBD"          # dsim-cloud | spike | verilator
+sim_dir:   "sim/uvmt"
+make_flags: "COREV=YES"

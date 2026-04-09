@@ -1,0 +1,64 @@
+# Copyright 2026 OpenHW Group
+# SPDX-License-Identifier: Apache-2.0
+#
+# ============================================================================
+# Workflow: Nightly Tier 2 Dispatch
+# ============================================================================
+#
+# PURPOSE:
+#   Dispatches the Tier 2 (full coverage) workflow in each monitored
+#   repository. Tier 2 is NOT a PR gate — it runs nightly to catch
+#   regressions before they accumulate.
+#
+# REQUIREMENTS:
+#   • Secret DISPATCH_TOKEN must be set in ci-hub's repository secrets.
+#     It must be a Personal Access Token (PAT) or fine-grained token with
+#     the "workflow" permission scope on each target repository.
+#   • Each target repository must have a workflow named "tier2.yml" with
+#     an `on: workflow_dispatch:` trigger.
+#
+# ============================================================================
+
+name: trigger-nightly
+
+on:
+  schedule:
+    - cron: '0 2 * * *'      # 02:00 UTC every night
+  workflow_dispatch:           # Manual trigger for testing
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────
+  trigger-cva6-tier2:
+  # ──────────────────────────────────────────────────────────────────────────
+    name: Trigger CVA6 Tier 2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch tier2 on CVA6 fork
+        run: |
+          gh workflow run tier2.yml \
+            --repo "${CVA6_REPO}" \
+            --ref  "${CVA6_REF}"
+        env:
+          GH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}
+          # TODO: replace AlexChenIC with your GitHub username
+          CVA6_REPO: "AlexChenIC/cva6"
+          CVA6_REF:  "master"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  trigger-cv32e20-tier2:
+  # ──────────────────────────────────────────────────────────────────────────
+    name: Trigger CV32E20-DV Tier 2
+    runs-on: ubuntu-latest
+    # Remove this `if:` condition once cv32e20-dv CI is validated (Phase 3)
+    if: false
+    steps:
+      - name: Dispatch tier2 on CV32E20-DV fork
+        run: |
+          gh workflow run tier2.yml \
+            --repo "${CV32E20_REPO}" \
+            --ref  "${CV32E20_REF}"
+        env:
+          GH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}
+          # TODO: replace AlexChenIC with your GitHub username
+          CV32E20_REPO: "AlexChenIC/cv32e20-dv"
+          CV32E20_REF:  "main"

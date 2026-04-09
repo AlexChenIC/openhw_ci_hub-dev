@@ -1,0 +1,223 @@
+# Copyright 2026 OpenHW Group
+# SPDX-License-Identifier: Apache-2.0
+#
+# ============================================================================
+# Reusable Workflow: RISC-V Tier 1 — PR Gate
+# ============================================================================
+#
+# PURPOSE:
+#   Runs a single testcase for a single CVA6 configuration.
+#   Called by thin wrapper files in target repositories via `uses:`.
+#   Target: ≤ 15 min wall-clock per job.
+#
+# CALLER EXAMPLE:
+#   jobs:
+#     tier1-cv32a65x:
+#       uses: AlexChenIC/ci-hub/.github/workflows/riscv-tier1.yml@main
+#       with:
+#         arch:     RV32
+#         target:   cv32a65x
+#         testcase: smoke-tests-cv32a65x
+#         mode:     script
+#       secrets: inherit
+#
+# JOB NAME FORMAT (parsed by dashboard's parser.py):
+#   "${{ arch }} Tier1 ${{ target }} / ${{ testcase }}"
+#   e.g. "RV32 Tier1 cv32a65x / smoke-tests-cv32a65x"
+#
+# EXECUTION MODES:
+#   script         — source verif/regress/{testcase}.sh
+#   testlist       — python3 verif/sim/cva6.py --testlist ... --test {test_name}
+#   custom_c_test  — compile C file, run via cva6.py
+#
+# SEE ALSO:
+#   riscv-tier2.yml  — full testlist (no --test filter)
+#   setup-riscv-env/ — composite action for tool caching
+# ============================================================================
+
+on:
+  workflow_call:
+    inputs:
+      # ── Required ───────────────────────────────────────────────────────────
+      arch:
+        description: 'Architecture label for job name: RV32 or RV64'
+        type: string
+        required: true
+
+      target:
+        description: 'CVA6 target configuration (e.g. cv32a65x, cv64a6_imafdc_sv39_hpdcache_wb)'
+        type: string
+        required: true
+
+      testcase:
+        description: 'Test script name (mode=script), testlist key (mode=testlist), or label (mode=custom_c_test)'
+        type: string
+        required: true
+
+      # ── Execution control ─────────────────────────────────────────────────
+      mode:
+        description: 'Execution mode: script | testlist | custom_c_test'
+        type: string
+        default: 'script'
+
+      simulator:
+        description: 'Simulator string passed to cva6.py --iss (e.g. veri-testharness,spike)'
+        type: string
+        default: 'veri-testharness,spike'
+
+      # ── testlist mode parameters ──────────────────────────────────────────
+      install-script:
+        description: 'Extra install script to source before running (basename under verif/regress/)'
+        type: string
+        default: ''
+
+      testlist:
+        description: 'Path to testlist YAML (relative to verif/sim/) — required for mode=testlist'
+        type: string
+        default: ''
+
+      test-name:
+        description: 'Single test name to run from the testlist (--test filter). Empty = run all.'
+        type: string
+        default: ''
+
+      linker:
+        description: 'Linker script path passed to cva6.py --linker'
+        type: string
+        default: ''
+
+      # ── custom_c_test mode parameters ────────────────────────────────────
+      c-test:
+        description: 'Path to C test file (relative to verif/sim/) — required for mode=custom_c_test'
+        type: string
+        default: ''
+
+      # ── Environment ───────────────────────────────────────────────────────
+      spike-tandem:
+        description: 'Enable Spike tandem verification (sets SPIKE_TANDEM=1)'
+        type: boolean
+        default: true
+
+      num-jobs:
+        description: 'Parallel jobs for tool compilation (NUM_JOBS)'
+        type: number
+        default: 8
+
+      artifact-retention-days:
+        description: 'Days to retain CI result artifacts'
+        type: number
+        default: 14
+
+env:
+  SPIKE_TANDEM: ${{ inputs.spike-tandem && '1' || '0' }}
+  NUM_JOBS: ${{ inputs.num-jobs }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────
+  execute-tier1:
+  # ──────────────────────────────────────────────────────────────────────────
+    name: "${{ inputs.arch }} Tier1 ${{ inputs.target }} / ${{ inputs.testcase }}"
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── Setup: checkout + tool cache ──────────────────────────────────────
+      - name: Setup RISC-V Environment
+        uses: ./.github/actions/setup-riscv-env
+        with:
+          install-tools: 'true'
+
+      # ── Prerequisites (arch-test, compliance, etc.) ───────────────────────
+      - name: Install CI prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          source ci/install-prereq.sh
+
+      # ── Test execution ─────────────────────────────────────────────────────
+      - name: "Run ${{ inputs.target }} / ${{ inputs.testcase }}"
+        shell: bash
+        run: |
+          set -x
+          mkdir -p ci-results
+          echo "1" > ci-results/exit_code
+          source verif/sim/setup-env.sh
+
+          CC_OPTS="-static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles \
+            -g ../tests/custom/common/syscalls.c ../tests/custom/common/crt.S \
+            -I../tests/custom/env -I../tests/custom/common -lgcc"
+          rc=0
+
+          # ── mode: testlist ────────────────────────────────────────────────
+          if [ "${{ inputs.mode }}" = "testlist" ]; then
+            if [[ "${{ inputs.simulator }}" == *"veri-testharness"* ]]; then
+              source verif/regress/install-verilator.sh
+            fi
+            source verif/regress/install-spike.sh
+            if [ -n "${{ inputs.install-script }}" ]; then
+              source "verif/regress/${{ inputs.install-script }}.sh"
+            fi
+
+            LINKER_OPT=""
+            if [ -n "${{ inputs.linker }}" ]; then
+              LINKER_OPT="--linker=${{ inputs.linker }}"
+            fi
+            TEST_OPT=""
+            if [ -n "${{ inputs.test-name }}" ]; then
+              TEST_OPT="--test ${{ inputs.test-name }}"
+            fi
+
+            cd verif/sim
+            python3 cva6.py \
+              --testlist="${{ inputs.testlist }}" \
+              --target "${{ inputs.target }}" \
+              --iss_yaml=cva6.yaml \
+              --iss="${{ inputs.simulator }}" \
+              --issrun_opts="+tb_performance_mode+debug_disable=1+UVM_VERBOSITY=UVM_NONE" \
+              ${LINKER_OPT} \
+              ${TEST_OPT} \
+              || rc=$?
+            cd -
+
+          # ── mode: custom_c_test ───────────────────────────────────────────
+          elif [ "${{ inputs.mode }}" = "custom_c_test" ]; then
+            source verif/regress/install-spike.sh
+
+            LINKER_OPT=""
+            if [ -n "${{ inputs.linker }}" ]; then
+              LINKER_OPT="--linker=${{ inputs.linker }}"
+            fi
+
+            cd verif/sim
+            python3 cva6.py \
+              --target "${{ inputs.target }}" \
+              --iss_yaml=cva6.yaml \
+              --iss="${{ inputs.simulator }}" \
+              --c_tests "${{ inputs.c-test }}" \
+              --gcc_opts="${CC_OPTS}" \
+              ${LINKER_OPT} \
+              --issrun_opts="+tb_performance_mode+debug_disable=1+UVM_VERBOSITY=UVM_NONE" \
+              || rc=$?
+            cd -
+
+          # ── mode: script (default) ────────────────────────────────────────
+          else
+            DV_SIMULATORS="${{ inputs.simulator }}" \
+            DV_TARGET="${{ inputs.target }}" \
+              bash "verif/regress/${{ inputs.testcase }}.sh" || rc=$?
+          fi
+
+          echo "${rc}" > ci-results/exit_code
+          find verif/sim -name "iss_regr.log" -exec cp {} ci-results/ \; 2>/dev/null || true
+          exit ${rc}
+
+      # ── Artifacts ─────────────────────────────────────────────────────────
+      - name: Upload Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: "tier1-${{ inputs.target }}-${{ inputs.testcase }}"
+          path: |
+            ci-results/
+            verif/sim/out*/
+          retention-days: ${{ inputs.artifact-retention-days }}

@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenHW CI Hub</title>
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+        crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
+          crossorigin="anonymous"></script>
+  <style>
+    body { background: #f8f9fa; }
+    .navbar-brand img { height: 28px; margin-right: 8px; }
+    .card { border: none; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+    .card-header { background: #fff; font-weight: 600; border-bottom: 2px solid #e9ecef; }
+
+    /* Status badges */
+    .badge-success  { background:#198754; color:#fff; }
+    .badge-failure  { background:#dc3545; color:#fff; }
+    .badge-skipped  { background:#6c757d; color:#fff; }
+    .badge-unknown  { background:#adb5bd; color:#fff; }
+
+    /* CI matrix */
+    .matrix-table th { font-size:.75rem; white-space:nowrap; }
+    .matrix-table td { font-size:.8rem;  text-align:center; vertical-align:middle; }
+    .cell-pass    { background:#d1e7dd; }
+    .cell-fail    { background:#f8d7da; }
+    .cell-skip    { background:#e2e3e5; }
+    .cell-na      { background:#f8f9fa; color:#adb5bd; }
+    .cell-pass a, .cell-fail a { text-decoration:none; color:inherit; }
+
+    /* Overview table */
+    .status-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+    .dot-green  { background:#198754; }
+    .dot-red    { background:#dc3545; }
+    .dot-grey   { background:#adb5bd; }
+
+    /* Repo tabs */
+    .repo-section { display:none; }
+    .repo-section.active { display:block; }
+    .nav-pills .nav-link.active { background:#0d6efd; }
+
+    footer { color:#6c757d; font-size:.8rem; }
+  </style>
+</head>
+<body>
+
+<!-- ── Navbar ───────────────────────────────────────────────────────────── -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+  <div class="container-fluid">
+    <span class="navbar-brand fw-bold">
+      OpenHW CI Hub
+    </span>
+    <span class="navbar-text text-secondary small">
+      Updated: {{ generated_at }}
+    </span>
+  </div>
+</nav>
+
+<div class="container-xxl pb-5">
+
+  <!-- ── Overview table ─────────────────────────────────────────────────── -->
+  <div class="card mb-4">
+    <div class="card-header">All Repositories — Latest Status</div>
+    <div class="card-body p-0">
+      <table class="table table-sm table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Repository</th>
+            <th class="text-center">Tier 1 (PR Gate)</th>
+            <th class="text-center">Tier 2 (Nightly)</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in overview %}
+          <tr>
+            <td class="fw-semibold">{{ row.display_name }}</td>
+            <td class="text-center">
+              {% if row.tier1_latest %}
+                {% if row.tier1_latest.conclusion == 'success' %}
+                  <span class="badge badge-success">✓ {{ row.tier1_latest.passed_jobs }}/{{ row.tier1_latest.total_jobs }}</span>
+                {% elif row.tier1_latest.conclusion == 'failure' %}
+                  <span class="badge badge-failure">✗ {{ row.tier1_latest.failed_jobs }} fail</span>
+                {% else %}
+                  <span class="badge badge-unknown">{{ row.tier1_latest.conclusion }}</span>
+                {% endif %}
+              {% else %}
+                <span class="text-muted small">No data</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              {% if row.tier2_latest %}
+                {% if row.tier2_latest.conclusion == 'success' %}
+                  <span class="badge badge-success">✓ {{ row.tier2_latest.passed_jobs }}/{{ row.tier2_latest.total_jobs }}</span>
+                {% elif row.tier2_latest.conclusion == 'failure' %}
+                  <span class="badge badge-failure">✗ {{ row.tier2_latest.failed_jobs }} fail</span>
+                {% else %}
+                  <span class="badge badge-unknown">{{ row.tier2_latest.conclusion }}</span>
+                {% endif %}
+              {% else %}
+                <span class="text-muted small">No data</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <a href="#"
+                 onclick="showRepo('{{ row.slug | replace('/','_') }}'); return false;"
+                 class="btn btn-sm btn-outline-primary">Details</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Repo selector tabs ─────────────────────────────────────────────── -->
+  <ul class="nav nav-pills mb-3" id="repoTabs">
+    {% for rd in repos %}
+    <li class="nav-item">
+      <a class="nav-link {% if loop.first %}active{% endif %}"
+         href="#"
+         onclick="showRepo('{{ rd.slug | replace('/','_') }}'); return false;"
+         id="tab-{{ rd.slug | replace('/','_') }}">
+        {{ rd.display_name }}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <!-- ── Per-repo sections ──────────────────────────────────────────────── -->
+  {% for rd in repos %}
+  <div class="repo-section {% if loop.first %}active{% endif %}"
+       id="repo-{{ rd.slug | replace('/','_') }}">
+
+    {% if not rd.has_data %}
+    <div class="alert alert-info">
+      No CI data collected yet for <strong>{{ rd.display_name }}</strong>.
+      Run <code>collect-results.yml</code> to populate.
+    </div>
+    {% else %}
+
+    <!-- Workflow tabs (Tier1 / Tier2 within a repo) -->
+    <ul class="nav nav-tabs mb-3" id="wfTabs-{{ rd.slug | replace('/','_') }}">
+      {% for wf in rd.workflows %}
+      {% if wf.runs %}
+      <li class="nav-item">
+        <a class="nav-link {% if loop.first %}active{% endif %}"
+           data-bs-toggle="tab"
+           href="#wf-{{ rd.slug | replace('/','_') }}-{{ wf.key }}">
+          {{ wf.display_name }}
+        </a>
+      </li>
+      {% endif %}
+      {% endfor %}
+    </ul>
+
+    <div class="tab-content">
+      {% for wf in rd.workflows %}
+      {% if wf.runs %}
+      <div class="tab-pane fade {% if loop.first %}show active{% endif %}"
+           id="wf-{{ rd.slug | replace('/','_') }}-{{ wf.key }}">
+
+        <!-- Latest run summary cards -->
+        {% if wf.latest %}
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <div class="card text-center h-100">
+              <div class="card-body">
+                <div class="h5 mb-1">
+                  {% if wf.latest.conclusion == 'success' %}
+                    <span class="text-success">✓ PASS</span>
+                  {% elif wf.latest.conclusion == 'failure' %}
+                    <span class="text-danger">✗ FAIL</span>
+                  {% else %}
+                    <span class="text-secondary">{{ wf.latest.conclusion | upper }}</span>
+                  {% endif %}
+                </div>
+                <div class="text-muted small">Run #{{ wf.latest.run_number }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card h-100">
+              <div class="card-body">
+                <div class="small text-muted">Branch / SHA</div>
+                <div class="fw-semibold">{{ wf.latest.head_branch }}</div>
+                <div class="font-monospace small">{{ wf.latest.head_sha }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card h-100">
+              <div class="card-body">
+                <div class="small text-muted">Jobs</div>
+                <span class="text-success fw-bold">{{ wf.latest.passed_jobs }}✓</span>
+                <span class="text-danger fw-bold ms-2">{{ wf.latest.failed_jobs }}✗</span>
+                <span class="text-muted fw-bold ms-2">{{ wf.latest.skipped_jobs }}–</span>
+                <div class="text-muted small">Duration: {{ wf.latest.duration }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card h-100">
+              <div class="card-body">
+                <div class="small text-muted">Started</div>
+                <div class="small">{{ wf.latest.created_at }}</div>
+                <a href="{{ wf.latest.html_url }}" target="_blank"
+                   class="btn btn-sm btn-outline-secondary mt-1">View Run</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- CI Matrix -->
+        {% if wf.matrix.configs %}
+        <div class="card mb-4">
+          <div class="card-header">Test Matrix (latest result per cell)</div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-bordered matrix-table mb-0">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Config</th>
+                    {% for suite in wf.matrix.testcases %}
+                    <th>{{ suite }}</th>
+                    {% endfor %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for config in wf.matrix.configs %}
+                  <tr>
+                    <td class="fw-semibold small font-monospace">{{ config }}</td>
+                    {% for suite in wf.matrix.testcases %}
+                    {% set cell = wf.matrix.cells.get(config, {}).get(suite) %}
+                    {% if cell %}
+                      {% if cell.conclusion == 'success' %}
+                      <td class="cell-pass"><a href="{{ cell.html_url }}" target="_blank">✓</a></td>
+                      {% elif cell.conclusion in ['failure','timed_out'] %}
+                      <td class="cell-fail"><a href="{{ cell.html_url }}" target="_blank">✗</a></td>
+                      {% else %}
+                      <td class="cell-skip">–</td>
+                      {% endif %}
+                    {% else %}
+                      <td class="cell-na">·</td>
+                    {% endif %}
+                    {% endfor %}
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Trend charts -->
+        {% if wf.trend.labels %}
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">Pass Rate (%) — last {{ wf.trend.labels | length }} runs</div>
+              <div class="card-body">
+                <canvas id="chart-pass-{{ rd.slug | replace('/','_') }}-{{ wf.key }}"
+                        height="120"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">Duration (min) — last {{ wf.trend.labels | length }} runs</div>
+              <div class="card-body">
+                <canvas id="chart-dur-{{ rd.slug | replace('/','_') }}-{{ wf.key }}"
+                        height="120"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <script>
+        (function() {
+          var slug = "{{ rd.slug | replace('/','_') }}-{{ wf.key }}";
+          var labels = {{ wf.trend.labels | tojson }};
+          var passRates = {{ wf.trend.pass_rates | tojson }};
+          var durations = {{ wf.trend.durations | tojson }};
+          new Chart(document.getElementById("chart-pass-" + slug), {
+            type: "line",
+            data: {labels: labels, datasets:[{
+              label:"Pass %", data:passRates,
+              borderColor:"#198754", backgroundColor:"rgba(25,135,84,.1)",
+              tension:.3, fill:true, pointRadius:3
+            }]},
+            options:{scales:{y:{min:0,max:100,ticks:{callback:v=>v+"%"}}},
+                     plugins:{legend:{display:false}}}
+          });
+          new Chart(document.getElementById("chart-dur-" + slug), {
+            type: "bar",
+            data: {labels: labels, datasets:[{
+              label:"Duration (min)", data:durations,
+              backgroundColor:"rgba(13,110,253,.5)"
+            }]},
+            options:{scales:{y:{beginAtZero:true}},
+                     plugins:{legend:{display:false}}}
+          });
+        })();
+        </script>
+        {% endif %}
+
+      </div>  <!-- tab-pane -->
+      {% endif %}
+      {% endfor %}
+    </div>  <!-- tab-content -->
+
+    {% endif %}  {# has_data #}
+  </div>  <!-- repo-section -->
+  {% endfor %}
+
+</div>  <!-- container -->
+
+<!-- ── Footer ────────────────────────────────────────────────────────────── -->
+<footer class="border-top py-3 mt-4">
+  <div class="container-xxl text-center">
+    OpenHW CI Hub &mdash; Generated {{ generated_at }} &mdash;
+    <a href="https://github.com/openhwgroup" target="_blank">OpenHW Group</a>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        crossorigin="anonymous"></script>
+<script>
+  var defaultSlug = "{{ default_repo_slug | replace('/','_') }}";
+
+  function showRepo(slug) {
+    // Hide all sections
+    document.querySelectorAll(".repo-section").forEach(function(el) {
+      el.classList.remove("active");
+    });
+    // Deactivate all tabs
+    document.querySelectorAll("#repoTabs .nav-link").forEach(function(el) {
+      el.classList.remove("active");
+    });
+    // Show target
+    var section = document.getElementById("repo-" + slug);
+    if (section) section.classList.add("active");
+    var tab = document.getElementById("tab-" + slug);
+    if (tab) tab.classList.add("active");
+  }
+
+  // Activate default repo on load
+  if (defaultSlug) showRepo(defaultSlug);
+</script>
+</body>
+</html>
