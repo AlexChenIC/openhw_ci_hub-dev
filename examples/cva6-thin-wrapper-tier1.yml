@@ -12,7 +12,7 @@
 #      GitHub only fires PR triggers for workflows on the default branch.
 #
 # WHAT THIS DOES:
-#   Calls the shared Tier 1 workflow in AlexChenIC/ci-hub for each of the
+#   Calls the shared Tier 1 workflow in AlexChenIC/openhw_ci_hub-dev for each of the
 #   three active CVA6 configurations. All CI logic lives in ci-hub; this
 #   file contains only configuration (what to run, not how).
 #
@@ -36,7 +36,7 @@ jobs:
 
   # ── cv32a65x — RV32 dual-issue, ISA: rv32imc_zba_zbb_zbs_zbc ─────────
   tier1-cv32a65x:
-    uses: "AlexChenIC/ci-hub/.github/workflows/riscv-tier1.yml@main"   # TODO: replace AlexChenIC
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier1.yml@main"   # TODO: replace AlexChenIC
     with:
       arch:     "RV32"
       target:   "cv32a65x"
@@ -47,7 +47,7 @@ jobs:
 
   # ── cv32a60x — RV32 single-issue, ISA: rv32imc_zba_zbb_zbs_zbc ──────
   tier1-cv32a60x:
-    uses: "AlexChenIC/ci-hub/.github/workflows/riscv-tier1.yml@main"   # TODO: replace AlexChenIC
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier1.yml@main"   # TODO: replace AlexChenIC
     with:
       arch:     "RV32"
       target:   "cv32a60x"
@@ -62,7 +62,7 @@ jobs:
 
   # ── cv64a6_imafdc_sv39_hpdcache_wb — RV64, SV39, HPDcache-WB ─────────
   tier1-cv64-hpdcache:
-    uses: "AlexChenIC/ci-hub/.github/workflows/riscv-tier1.yml@main"   # TODO: replace AlexChenIC
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier1.yml@main"   # TODO: replace AlexChenIC
     with:
       arch:     "RV64"
       target:   "cv64a6_imafdc_sv39_hpdcache_wb"

@@ -27,7 +27,7 @@ jobs:
 
   # ── cv32a65x ─────────────────────────────────────────────────────────
   tier2-cv32a65x-cv32a6-tests:
-    uses: "AlexChenIC/ci-hub/.github/workflows/riscv-tier2.yml@main"
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
       arch:     "RV32"
       target:   "cv32a65x"
@@ -36,7 +36,7 @@ jobs:
     secrets: inherit
 
   tier2-cv32a65x-arch-test:
-    uses: "AlexChenIC/ci-hub/.github/workflows/riscv-tier2.yml@main"
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
       arch:     "RV32"
       target:   "cv32a65x"
@@ -48,7 +48,7 @@ jobs:
     secrets: inherit
 
   tier2-cv32a65x-compliance:
-    uses: "AlexChenIC/ci-hub/.github/workflows/riscv-tier2.yml@main"
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
       arch:     "RV32"
       target:   "cv32a65x"
@@ -58,7 +58,7 @@ jobs:
     secrets: inherit
 
   tier2-cv32a65x-riscv-tests-p:
-    uses: "AlexChenIC/ci-hub/.github/workflows/riscv-tier2.yml@main"
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
       arch:     "RV32"
       target:   "cv32a65x"
@@ -69,7 +69,7 @@ jobs:
 
   # ── cv32a60x ─────────────────────────────────────────────────────────
   tier2-cv32a60x-arch-test:
-    uses: "AlexChenIC/ci-hub/.github/workflows/riscv-tier2.yml@main"
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
       arch:     "RV32"
       target:   "cv32a60x"
@@ -81,7 +81,7 @@ jobs:
     secrets: inherit
 
   tier2-cv32a60x-compliance:
-    uses: "AlexChenIC/ci-hub/.github/workflows/riscv-tier2.yml@main"
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
       arch:     "RV32"
       target:   "cv32a60x"
@@ -91,7 +91,7 @@ jobs:
     secrets: inherit
 
   tier2-cv32a60x-riscv-tests-p:
-    uses: "AlexChenIC/ci-hub/.github/workflows/riscv-tier2.yml@main"
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
       arch:     "RV32"
       target:   "cv32a60x"
@@ -102,7 +102,7 @@ jobs:
 
   # ── cv64a6_imafdc_sv39_hpdcache_wb ──────────────────────────────────
   tier2-hpdcache-arch-test:
-    uses: "AlexChenIC/ci-hub/.github/workflows/riscv-tier2.yml@main"
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
       arch:     "RV64"
       target:   "cv64a6_imafdc_sv39_hpdcache_wb"
@@ -114,7 +114,7 @@ jobs:
     secrets: inherit
 
   tier2-hpdcache-tests-v:
-    uses: "AlexChenIC/ci-hub/.github/workflows/riscv-tier2.yml@main"
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
       arch:     "RV64"
       target:   "cv64a6_imafdc_sv39_hpdcache_wb"
@@ -124,7 +124,7 @@ jobs:
     secrets: inherit
 
   tier2-hpdcache-tests-p:
-    uses: "AlexChenIC/ci-hub/.github/workflows/riscv-tier2.yml@main"
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
       arch:     "RV64"
       target:   "cv64a6_imafdc_sv39_hpdcache_wb"
@@ -134,7 +134,7 @@ jobs:
     secrets: inherit
 
   tier2-hpdcache-compliance:
-    uses: "AlexChenIC/ci-hub/.github/workflows/riscv-tier2.yml@main"
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
       arch:     "RV64"
       target:   "cv64a6_imafdc_sv39_hpdcache_wb"

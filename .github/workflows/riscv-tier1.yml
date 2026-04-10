@@ -13,7 +13,7 @@
 # CALLER EXAMPLE:
 #   jobs:
 #     tier1-cv32a65x:
-#       uses: AlexChenIC/ci-hub/.github/workflows/riscv-tier1.yml@main
+#       uses: AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier1.yml@main
 #       with:
 #         arch:     RV32
 #         target:   cv32a65x

@@ -4,7 +4,7 @@
 
 This repository provides **reusable GitHub Actions workflows**, a **shared composite action** for RISC-V tool setup, and a **unified CI Dashboard** that aggregates results across multiple OpenHW repositories.
 
-**Live Dashboard**: https://AlexChenIC.github.io/ci-hub/ *(replace `AlexChenIC` after setup)*
+**Live Dashboard**: https://AlexChenIC.github.io/openhw_ci_hub-dev/ *(replace `AlexChenIC` after setup)*
 
 ---
 
@@ -55,7 +55,7 @@ cp examples/cva6-thin-wrapper-tier1.yml path/to/cva6/.github/workflows/tier1.yml
 cp examples/cva6-thin-wrapper-tier2.yml path/to/cva6/.github/workflows/tier2.yml
 ```
 
-Update the `uses:` path in each file to point to `AlexChenIC/ci-hub`.
+Update the `uses:` path in each file to point to `AlexChenIC/openhw_ci_hub-dev`.
 
 ### 3. Enable GitHub Pages
 
@@ -73,7 +73,7 @@ In this repository's **Settings → Secrets → Actions**:
 
 ```bash
 # Manually trigger data collection
-gh workflow run collect-results.yml --repo AlexChenIC/ci-hub
+gh workflow run collect-results.yml --repo AlexChenIC/openhw_ci_hub-dev
 ```
 
 ---
@@ -85,7 +85,7 @@ AlexChenIC/cva6 (fork)          AlexChenIC/cv32e20-dv (fork)
   tier1.yml (15 lines)  ──────►  tier1.yml (15 lines)
        │ uses:                         │ uses:
        ▼                               ▼
-  AlexChenIC/ci-hub
+  AlexChenIC/openhw_ci_hub-dev
   ├── riscv-tier1.yml    ◄── reusable workflow logic
   ├── riscv-tier2.yml    ◄── reusable workflow logic
   ├── setup-riscv-env/   ◄── composite action

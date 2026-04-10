@@ -14,7 +14,7 @@ We use semantic versioning for releases (e.g. `v1.2.0`).
 Target repos should pin to a release tag rather than `@main` for stability:
 
 ```yaml
-uses: AlexChenIC/ci-hub/.github/workflows/riscv-tier1.yml@v1
+uses: AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier1.yml@v1
 ```
 
 Changes to reusable workflow **inputs** (adding/removing/renaming) are breaking changes

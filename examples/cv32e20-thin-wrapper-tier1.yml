@@ -1,0 +1,74 @@
+# ============================================================================
+# CV32E20 Thin Wrapper — Tier 1 PR Gate  [PHASE 3 — NOT READY]
+# ============================================================================
+#
+# STATUS: INCOMPLETE — do not enable until Phase 0 investigation is complete.
+#
+# BLOCKING DECISION (Phase 0):
+#   cv32e20-dv has no Verilator support. A simulator must be chosen:
+#     Option A: DSim Cloud (preferred — investigate dsim-action GHA integration)
+#     Option B: Spike-only ISS (no RTL simulation, limited coverage)
+#     Option C: Add Verilator support to cv32e20-dv (large effort)
+#   See docs/07-cv32e20-integration.md for full analysis.
+#
+# INSTRUCTIONS (after Phase 0 decision):
+#   1. Copy this file to your cv32e20-dv fork:
+#        AlexChenIC/cv32e20-dv/.github/workflows/tier1.yml
+#   2. Fill in the `simulator` input based on Phase 0 decision.
+#   3. Confirm install-script and testlist paths for your simulator.
+#   4. Merge to master before opening test PRs.
+#
+# JOB NAMING CONVENTION: "CV32E20 Tier1 cv32e20 / {testcase}"
+#   (parsed by .github/scripts/parser.py)
+# ============================================================================
+
+name: CV32E20 Tier1 PR Gate
+
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: cv32e20-tier1-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ── cv32e20 — RV32IMC, single config ─────────────────────────────────────
+  #
+  # PHASE 3 TODO: Uncomment and configure after simulator decision.
+  #
+  # tier1-cv32e20-hello:
+  #   uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier1.yml@main"
+  #   with:
+  #     arch:     "CV32E20"
+  #     target:   "cv32e20"
+  #     testcase: "hello_world"
+  #     mode:     "script"               # or "testlist" — TBD
+  #     simulator: "TBD"                 # dsim / spike — Phase 0 decision
+  #   secrets: inherit
+  #
+  # tier1-cv32e20-smoke:
+  #   uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier1.yml@main"
+  #   with:
+  #     arch:     "CV32E20"
+  #     target:   "cv32e20"
+  #     testcase: "cv32e20_ci_check"
+  #     mode:     "testlist"
+  #     simulator: "TBD"
+  #     install-script: "TBD"
+  #     testlist: "../regress/cv32e20_ci_check.yaml"
+  #   secrets: inherit
+
+  # Placeholder job to keep the workflow file syntactically valid.
+  phase3-not-ready:
+    runs-on: ubuntu-latest
+    steps:
+      - name: CV32E20 CI not yet configured
+        run: |
+          echo "CV32E20 Tier1 is pending Phase 0 simulator investigation."
+          echo "See docs/07-cv32e20-integration.md for details."
+          exit 0

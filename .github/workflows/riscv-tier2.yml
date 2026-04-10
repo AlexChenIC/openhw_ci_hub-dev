@@ -21,7 +21,7 @@
 # CALLER EXAMPLE:
 #   jobs:
 #     tier2-cv32a65x-arch-test:
-#       uses: AlexChenIC/ci-hub/.github/workflows/riscv-tier2.yml@main
+#       uses: AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main
 #       with:
 #         arch:        RV32
 #         target:      cv32a65x
