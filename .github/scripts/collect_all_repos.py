@@ -167,7 +167,26 @@ def merge_runs(existing: list[dict], new_runs: list[dict]) -> list[dict]:
 
 # ── Per-repo collection ───────────────────────────────────────────────────
 
-def collect_repo(repo_cfg: dict, data_dir: Path, fetch_count: int) -> None:
+def _resolve_config_path(config_ref: str, repos_config_path: Path) -> Path:
+    """Resolve config paths stored in repos.yml.
+
+    Existing repo entries use paths relative to the ci-hub repository root
+    (for example, config/cva6-matrix.yml), while local experiments sometimes
+    use paths relative to the repos.yml directory. Accept both forms.
+    """
+    path = Path(config_ref)
+    if path.is_absolute():
+        return path
+
+    config_dir = repos_config_path.resolve().parent
+    for candidate in (config_dir / path, config_dir.parent / path, Path.cwd() / path):
+        if candidate.exists():
+            return candidate
+    return config_dir.parent / path
+
+
+def collect_repo(repo_cfg: dict, data_dir: Path, fetch_count: int,
+                 repos_config_path: Path) -> None:
     """Collect CI data for a single repository.  Errors are caught and logged."""
     owner = repo_cfg["owner"]
     repo  = repo_cfg["repo"]
@@ -176,12 +195,13 @@ def collect_repo(repo_cfg: dict, data_dir: Path, fetch_count: int) -> None:
     # Load per-repo known_configs (used by parser for config recognition)
     matrix_cfg_path = repo_cfg.get("matrix_config", "")
     known_configs: Optional[list[str]] = None
-    if matrix_cfg_path and Path(matrix_cfg_path).exists():
+    if matrix_cfg_path:
+        matrix_path = _resolve_config_path(matrix_cfg_path, repos_config_path)
         try:
-            matrix = yaml.safe_load(Path(matrix_cfg_path).read_text())
+            matrix = yaml.safe_load(matrix_path.read_text())
             known_configs = matrix.get("known_configs")
         except Exception as exc:
-            print(f"  WARNING: could not load {matrix_cfg_path}: {exc}", file=sys.stderr)
+            print(f"  WARNING: could not load {matrix_path}: {exc}", file=sys.stderr)
 
     repo_data_dir = data_dir / owner / repo
     repo_data_dir.mkdir(parents=True, exist_ok=True)
@@ -235,7 +255,8 @@ def main() -> None:
                     help="Number of recent runs to fetch per workflow")
     args = ap.parse_args()
 
-    repos_config = yaml.safe_load(Path(args.repos_config).read_text())
+    repos_config_path = Path(args.repos_config)
+    repos_config = yaml.safe_load(repos_config_path.read_text())
     repos = repos_config.get("repos", [])
     data_dir = Path(args.data_dir)
     data_dir.mkdir(parents=True, exist_ok=True)
@@ -253,7 +274,7 @@ def main() -> None:
         print(f"Repository: {repo_cfg['owner']}/{repo_cfg['repo']}")
         print(f"{'='*60}")
         try:
-            collect_repo(repo_cfg, data_dir, args.fetch_count)
+            collect_repo(repo_cfg, data_dir, args.fetch_count, repos_config_path)
             repo_summary.append({"owner": repo_cfg["owner"],
                                   "repo": repo_cfg["repo"],
                                   "display_name": repo_cfg.get("display_name", repo_cfg["repo"]),

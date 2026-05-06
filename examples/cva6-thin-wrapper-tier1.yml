@@ -51,13 +51,9 @@ jobs:
     with:
       arch:     "RV32"
       target:   "cv32a60x"
-      testcase: "dv-riscv-arch-test"
-      mode:     "testlist"
+      testcase: "cv32a6_tests"
+      mode:     "script"
       simulator: "veri-testharness,spike"
-      install-script: "install-riscv-arch-test"
-      testlist: "../tests/testlist_riscv-arch-test-cv32a60x.yaml"
-      test-name: "rv32im-cadd-01"
-      linker:   "../tests/riscv-arch-test/riscv-target/spike/link.ld"
     secrets: inherit
 
   # ── cv64a6_imafdc_sv39_hpdcache_wb — RV64, SV39, HPDcache-WB ─────────

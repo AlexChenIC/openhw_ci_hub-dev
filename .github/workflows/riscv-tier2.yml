@@ -96,6 +96,11 @@ on:
         type: number
         default: 8
 
+      hwconfig-opts:
+        description: 'Optional DV_HWCONFIG_OPTS value for hwconfig-based script tests'
+        type: string
+        default: ''
+
       artifact-retention-days:
         description: 'Days to retain CI result artifacts'
         type: number
@@ -115,7 +120,7 @@ jobs:
 
     steps:
       - name: Setup RISC-V Environment
-        uses: ./.github/actions/setup-riscv-env
+        uses: AlexChenIC/openhw_ci_hub-dev/.github/actions/setup-riscv-env@main
         with:
           install-tools: 'true'
 
@@ -132,6 +137,9 @@ jobs:
           mkdir -p ci-results
           echo "1" > ci-results/exit_code
           source verif/sim/setup-env.sh
+          if [ -n "${{ inputs.hwconfig-opts }}" ]; then
+            export DV_HWCONFIG_OPTS="${{ inputs.hwconfig-opts }}"
+          fi
 
           CC_OPTS="-static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles \
             -g ../tests/custom/common/syscalls.c ../tests/custom/common/crt.S \

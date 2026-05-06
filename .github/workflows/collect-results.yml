@@ -23,7 +23,7 @@ on:
 
 permissions:
   contents: write              # push data to gh-pages-ci-hub
-  actions: read                # read workflow run data via API
+  actions: write               # read workflow runs and dispatch deploy-dashboard
 
 concurrency:
   group: collect-results

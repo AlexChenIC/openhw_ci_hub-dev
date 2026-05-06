@@ -1,144 +1,273 @@
 # ============================================================================
-# CVA6 Thin Wrapper — Tier 2 Full Coverage
+# CVA6 Thin Wrapper - Tier 2 Full Coverage
 # ============================================================================
 #
 # INSTRUCTIONS:
-#   1. Copy to AlexChenIC/cva6/.github/workflows/tier2.yml
-#   2. Replace AlexChenIC with your GitHub username.
+#   1. Copy to AlexChenIC/cva6/.github/workflows/tier2.yml.
+#   2. Replace AlexChenIC with your GitHub username or organization.
 #
 # WHAT THIS DOES:
-#   Runs the full testlist (no --test filter) for all active configs.
-#   Triggered nightly by ci-hub's trigger-nightly.yml, or manually.
-#   NOT a PR gate — too slow for that purpose.
+#   Runs the same 22-job Tier 2 matrix currently validated in
+#   AlexChenIC/cva6-tier-ci-test-20260427. All execution logic lives in
+#   AlexChenIC/openhw_ci_hub-dev; this wrapper only declares what to run.
 # ============================================================================
 
 name: CVA6 Tier2 Full Coverage
 
 on:
-  workflow_dispatch:           # Triggered by ci-hub's trigger-nightly.yml
+  workflow_dispatch:
   # schedule:
-  #   - cron: '0 3 * * *'    # Uncomment to also run independently each night
+  #   - cron: "0 22 * * *"
 
 concurrency:
   group: cva6-tier2-${{ github.ref }}
-  cancel-in-progress: false   # Let full runs complete
+  cancel-in-progress: false
 
 jobs:
+  # cv32a65x
+  tier2-cv32a65x-smoke:
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
+    with:
+      arch: "RV32"
+      target: "cv32a65x"
+      testcase: "smoke-tests-cv32a65x"
+      mode: "script"
+      simulator: "veri-testharness,spike"
+    secrets: inherit
 
-  # ── cv32a65x ─────────────────────────────────────────────────────────
   tier2-cv32a65x-cv32a6-tests:
     uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
-      arch:     "RV32"
-      target:   "cv32a65x"
+      arch: "RV32"
+      target: "cv32a65x"
       testcase: "cv32a6_tests"
-      mode:     "script"
+      mode: "script"
+      simulator: "veri-testharness,spike"
     secrets: inherit
 
   tier2-cv32a65x-arch-test:
     uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
-      arch:     "RV32"
-      target:   "cv32a65x"
+      arch: "RV32"
+      target: "cv32a65x"
       testcase: "dv-riscv-arch-test"
-      mode:     "testlist"
+      mode: "testlist"
+      simulator: "veri-testharness,spike"
       install-script: "install-riscv-arch-test"
       testlist: "../tests/testlist_riscv-arch-test-cv32a65x.yaml"
-      linker:   "../tests/riscv-arch-test/riscv-target/spike/link.ld"
-    secrets: inherit
-
-  tier2-cv32a65x-compliance:
-    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
-    with:
-      arch:     "RV32"
-      target:   "cv32a65x"
-      testcase: "dv-riscv-compliance"
-      mode:     "testlist"
-      testlist: "../tests/testlist_riscv-compliance-cv32a65x.yaml"
+      linker: "../tests/riscv-arch-test/riscv-target/spike/link.ld"
     secrets: inherit
 
   tier2-cv32a65x-riscv-tests-p:
     uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
-      arch:     "RV32"
-      target:   "cv32a65x"
+      arch: "RV32"
+      target: "cv32a65x"
       testcase: "dv-riscv-tests-p"
-      mode:     "testlist"
+      mode: "testlist"
+      simulator: "veri-testharness,spike"
+      install-script: "install-riscv-tests"
       testlist: "../tests/testlist_riscv-tests-cv32a65x-p.yaml"
     secrets: inherit
 
-  # ── cv32a60x ─────────────────────────────────────────────────────────
+  tier2-cv32a65x-compliance:
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
+    with:
+      arch: "RV32"
+      target: "cv32a65x"
+      testcase: "dv-riscv-compliance"
+      mode: "testlist"
+      simulator: "veri-testharness,spike"
+      install-script: "install-riscv-compliance"
+      testlist: "../tests/testlist_riscv-compliance-cv32a65x.yaml"
+    secrets: inherit
+
+  tier2-cv32a65x-csr-access:
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
+    with:
+      arch: "RV32"
+      target: "cv32a65x"
+      testcase: "dv-riscv-csr-access-test"
+      mode: "script"
+      simulator: "veri-testharness,spike"
+    secrets: inherit
+
+  tier2-cv32a65x-csr-embedded:
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
+    with:
+      arch: "RV32"
+      target: "cv32a65x"
+      testcase: "dv-csr-embedded-tests"
+      mode: "script"
+      simulator: "veri-testharness"
+    secrets: inherit
+
+  tier2-cv32a65x-hwconfig:
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
+    with:
+      arch: "RV32"
+      target: "cv32a65x"
+      testcase: "hwconfig_tests"
+      mode: "script"
+      simulator: "veri-testharness,spike"
+      hwconfig-opts: "cv32a65x"
+    secrets: inherit
+
+  tier2-cv32a65x-coremark:
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
+    with:
+      arch: "RV32"
+      target: "cv32a65x"
+      testcase: "coremark"
+      mode: "script"
+      simulator: "veri-testharness"
+      hwconfig-opts: "cv32a65x"
+    secrets: inherit
+
+  tier2-cv32a65x-benchmark:
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
+    with:
+      arch: "RV32"
+      target: "cv32a65x"
+      testcase: "benchmark"
+      mode: "script"
+      simulator: "veri-testharness,spike"
+    secrets: inherit
+
+  # cv32a60x
+  tier2-cv32a60x-cv32a6-tests:
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
+    with:
+      arch: "RV32"
+      target: "cv32a60x"
+      testcase: "cv32a6_tests"
+      mode: "script"
+      simulator: "veri-testharness,spike"
+    secrets: inherit
+
   tier2-cv32a60x-arch-test:
     uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
-      arch:     "RV32"
-      target:   "cv32a60x"
+      arch: "RV32"
+      target: "cv32a60x"
       testcase: "dv-riscv-arch-test"
-      mode:     "testlist"
+      mode: "testlist"
+      simulator: "veri-testharness,spike"
       install-script: "install-riscv-arch-test"
       testlist: "../tests/testlist_riscv-arch-test-cv32a60x.yaml"
-      linker:   "../tests/riscv-arch-test/riscv-target/spike/link.ld"
-    secrets: inherit
-
-  tier2-cv32a60x-compliance:
-    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
-    with:
-      arch:     "RV32"
-      target:   "cv32a60x"
-      testcase: "dv-riscv-compliance"
-      mode:     "testlist"
-      testlist: "../tests/testlist_riscv-compliance-cv32a60x.yaml"
+      linker: "../tests/riscv-arch-test/riscv-target/spike/link.ld"
     secrets: inherit
 
   tier2-cv32a60x-riscv-tests-p:
     uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
-      arch:     "RV32"
-      target:   "cv32a60x"
+      arch: "RV32"
+      target: "cv32a60x"
       testcase: "dv-riscv-tests-p"
-      mode:     "testlist"
+      mode: "testlist"
+      simulator: "veri-testharness,spike"
+      install-script: "install-riscv-tests"
       testlist: "../tests/testlist_riscv-tests-cv32a60x-p.yaml"
     secrets: inherit
 
-  # ── cv64a6_imafdc_sv39_hpdcache_wb ──────────────────────────────────
+  tier2-cv32a60x-compliance:
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
+    with:
+      arch: "RV32"
+      target: "cv32a60x"
+      testcase: "dv-riscv-compliance"
+      mode: "testlist"
+      simulator: "veri-testharness,spike"
+      install-script: "install-riscv-compliance"
+      testlist: "../tests/testlist_riscv-compliance-cv32a60x.yaml"
+    secrets: inherit
+
+  tier2-cv32a60x-csr-access:
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
+    with:
+      arch: "RV32"
+      target: "cv32a60x"
+      testcase: "dv-riscv-csr-access-test"
+      mode: "script"
+      simulator: "veri-testharness,spike"
+    secrets: inherit
+
+  tier2-cv32a60x-benchmark:
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
+    with:
+      arch: "RV32"
+      target: "cv32a60x"
+      testcase: "benchmark"
+      mode: "script"
+      simulator: "veri-testharness,spike"
+    secrets: inherit
+
+  # cv64a6_imafdc_sv39_hpdcache_wb
+  tier2-hpdcache-cv64-tests:
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
+    with:
+      arch: "RV64"
+      target: "cv64a6_imafdc_sv39_hpdcache_wb"
+      testcase: "cv64a6_imafdc_tests"
+      mode: "script"
+      simulator: "veri-testharness,spike"
+    secrets: inherit
+
   tier2-hpdcache-arch-test:
     uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
-      arch:     "RV64"
-      target:   "cv64a6_imafdc_sv39_hpdcache_wb"
+      arch: "RV64"
+      target: "cv64a6_imafdc_sv39_hpdcache_wb"
       testcase: "dv-riscv-arch-test"
-      mode:     "testlist"
+      mode: "testlist"
+      simulator: "veri-testharness,spike"
       install-script: "install-riscv-arch-test"
-      testlist: "../tests/testlist_riscv-arch-test-cv64a6_imafdc_sv39_hpdcache.yaml"
-      linker:   "../tests/riscv-arch-test/riscv-target/spike/link.ld"
+      testlist: "../tests/testlist_riscv-arch-test-cv64a6_imafdc_sv39.yaml"
+      linker: "../tests/riscv-arch-test/riscv-target/spike/link.ld"
     secrets: inherit
 
   tier2-hpdcache-tests-v:
     uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
-      arch:     "RV64"
-      target:   "cv64a6_imafdc_sv39_hpdcache_wb"
+      arch: "RV64"
+      target: "cv64a6_imafdc_sv39_hpdcache_wb"
       testcase: "dv-riscv-tests-v"
-      mode:     "testlist"
-      testlist: "../tests/testlist_riscv-tests-cv64a6_imafdc_sv39_hpdcache-v.yaml"
+      mode: "testlist"
+      simulator: "veri-testharness,spike"
+      install-script: "install-riscv-tests"
+      testlist: "../tests/testlist_riscv-tests-cv64a6_imafdc_sv39-v.yaml"
     secrets: inherit
 
   tier2-hpdcache-tests-p:
     uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
-      arch:     "RV64"
-      target:   "cv64a6_imafdc_sv39_hpdcache_wb"
+      arch: "RV64"
+      target: "cv64a6_imafdc_sv39_hpdcache_wb"
       testcase: "dv-riscv-tests-p"
-      mode:     "testlist"
-      testlist: "../tests/testlist_riscv-tests-cv64a6_imafdc_sv39_hpdcache-p.yaml"
+      mode: "testlist"
+      simulator: "veri-testharness,spike"
+      install-script: "install-riscv-tests"
+      testlist: "../tests/testlist_riscv-tests-cv64a6_imafdc_sv39-p.yaml"
     secrets: inherit
 
   tier2-hpdcache-compliance:
     uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
     with:
-      arch:     "RV64"
-      target:   "cv64a6_imafdc_sv39_hpdcache_wb"
+      arch: "RV64"
+      target: "cv64a6_imafdc_sv39_hpdcache_wb"
       testcase: "dv-riscv-compliance"
-      mode:     "testlist"
-      testlist: "../tests/testlist_riscv-compliance-cv64a6_imafdc_sv39_hpdcache.yaml"
+      mode: "testlist"
+      simulator: "veri-testharness,spike"
+      install-script: "install-riscv-compliance"
+      testlist: "../tests/testlist_riscv-compliance-cv64a6_imafdc_sv39.yaml"
+    secrets: inherit
+
+  tier2-hpdcache-benchmark:
+    uses: "AlexChenIC/openhw_ci_hub-dev/.github/workflows/riscv-tier2.yml@main"
+    with:
+      arch: "RV64"
+      target: "cv64a6_imafdc_sv39_hpdcache_wb"
+      testcase: "benchmark"
+      mode: "script"
+      simulator: "veri-testharness,spike"
     secrets: inherit

@@ -4,7 +4,7 @@
 
 This repository provides **reusable GitHub Actions workflows**, a **shared composite action** for RISC-V tool setup, and a **unified CI Dashboard** that aggregates results across multiple OpenHW repositories.
 
-**Live Dashboard**: https://AlexChenIC.github.io/openhw_ci_hub-dev/ *(replace `AlexChenIC` after setup)*
+**Dashboard target**: https://AlexChenIC.github.io/openhw_ci_hub-dev/
 
 ---
 
@@ -28,10 +28,15 @@ Each target repository needs only a **thin wrapper** (~15 lines of YAML) that ca
 
 | Repository | Tier 1 (PR Gate) | Tier 2 (Nightly) | Notes |
 |------------|-----------------|-----------------|-------|
-| `AlexChenIC/cva6` | ✅ | ✅ | CVA6 OoO Core (fork) |
+| `AlexChenIC/cva6-tier-ci-test-20260427` | ✅ | ✅ | Current CVA6 tier CI validation repo |
 | `AlexChenIC/cv32e20-dv` | ⚙️ | ⚙️ | CV32E20 DV env (simulator TBD) |
 
 To add a new repository, see [docs/adding-new-repo.md](docs/adding-new-repo.md).
+
+Current project status and experiment tracking:
+
+- [CI Hub Status](docs/status.md)
+- [Experiment Plan](docs/experiment-plan.md)
 
 ---
 
@@ -39,10 +44,11 @@ To add a new repository, see [docs/adding-new-repo.md](docs/adding-new-repo.md).
 
 ### 1. Configure this repo
 
-Replace `AlexChenIC` in `config/repos.yml` with your GitHub username:
+`config/repos.yml` currently monitors `AlexChenIC/cva6-tier-ci-test-20260427`.
+For another fork or organization, update the owner/repo and workflow filenames:
 
 ```bash
-sed -i 's/AlexChenIC/YOUR_GITHUB_USERNAME/g' config/repos.yml
+$EDITOR config/repos.yml
 ```
 
 ### 2. Add thin wrappers to target repos
@@ -81,8 +87,8 @@ gh workflow run collect-results.yml --repo AlexChenIC/openhw_ci_hub-dev
 ## Architecture
 
 ```
-AlexChenIC/cva6 (fork)          AlexChenIC/cv32e20-dv (fork)
-  tier1.yml (15 lines)  ──────►  tier1.yml (15 lines)
+AlexChenIC/cva6-tier-ci-test-20260427   AlexChenIC/cv32e20-dv (future)
+  openhw-cva6-ci-tier*.yml ──────►      tier1.yml (thin wrapper)
        │ uses:                         │ uses:
        ▼                               ▼
   AlexChenIC/openhw_ci_hub-dev
@@ -94,7 +100,7 @@ AlexChenIC/cva6 (fork)          AlexChenIC/cv32e20-dv (fork)
   └── trigger-nightly.yml ─── dispatches Tier 2 to all repos
 ```
 
-**GitHub security model**: PR events in a target repo can only trigger workflows defined IN that repo. The thin wrapper files satisfy this requirement while delegating all logic to ci-hub.
+**GitHub security model**: PR events in a target repo can only trigger workflows defined IN that repo. Thin wrapper files satisfy this requirement while delegating execution logic to ci-hub. If the caller repo is public, the ci-hub reusable workflow repo must also be public or otherwise accessible under GitHub Actions access policy.
 
 ---
 
@@ -145,11 +151,13 @@ ci-hub/
 
 ## Roadmap
 
-- [x] Phase 1: CVA6 PR Gate (Tier 1)
-- [x] Phase 2: CVA6 Dashboard
-- [ ] Phase 3: cv32e20-dv integration (pending simulator investigation)
-- [ ] Phase 4: Propose to OpenHW organization (`openhwgroup/ci-hub`)
-- [ ] Phase 5: Expand to cv32e40p, cv32e40s, and other cores
+- [x] CVA6 data collection from the current tier CI validation repository
+- [x] CVA6 dashboard generation from live GitHub Actions data
+- [ ] GitHub Pages enablement and first hosted dashboard deployment
+- [ ] CVA6 thin-wrapper execution validation from a target repository
+- [ ] Nightly Tier 2 dispatch with `DISPATCH_TOKEN`
+- [ ] CV32E20-DV simulator decision and integration plan
+- [ ] Proposal for organization-level CI Hub adoption
 
 ---
 

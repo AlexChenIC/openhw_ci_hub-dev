@@ -13,23 +13,22 @@
 #   matrix_config Path to the matrix YAML for this repo (relative to ci-hub root)
 #   active        Set to false to skip collection without deleting the entry
 #
-# TODO: Replace AlexChenIC with your actual GitHub username before pushing.
-
 repos:
 
-  # ── CVA6 — 64/32-bit Out-of-Order RISC-V Core ──────────────────────────
-  - owner: "AlexChenIC"             # TODO: replace AlexChenIC
-    repo:  "cva6"
-    display_name: "CVA6 (fork)"
-    description: "64/32-bit RISC-V Out-of-Order Core — Verilator + Spike"
+  # ── CVA6 — current tier CI validation repository ───────────────────────
+  - owner: "AlexChenIC"
+    repo:  "cva6-tier-ci-test-20260427"
+    display_name: "CVA6 Tier CI Test"
+    description: "CVA6 tiered CI validation repo — Verilator + Spike"
     workflows:
-      riscv-tier1: "tier1.yml"      # must match .github/workflows/tier1.yml in the fork
-      riscv-tier2: "tier2.yml"      # must match .github/workflows/tier2.yml in the fork
+      ci: "ci.yml"
+      riscv-tier1: "openhw-cva6-ci-tier1.yml"
+      riscv-tier2: "openhw-cva6-ci-tier2.yml"
     matrix_config: "config/cva6-matrix.yml"
     active: true
 
   # ── CV32E20-DV — 32-bit RISC-V Verification Environment ────────────────
-  - owner: "AlexChenIC"             # TODO: replace AlexChenIC
+  - owner: "AlexChenIC"
     repo:  "cv32e20-dv"
     display_name: "CV32E20-DV (fork)"
     description: "32-bit RISC-V Verification Env — simulator TBD (see 07-cv32e20-integration.md)"

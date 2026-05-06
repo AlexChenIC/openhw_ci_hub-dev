@@ -1,7 +1,7 @@
 # CV32E20-DV CI Matrix Configuration
 #
 # STATUS: INCOMPLETE — simulator must be chosen before this file is finalised.
-# See .claude/ideas/openhw-ci-hub/07-cv32e20-integration.md (TODO-A through TODO-F).
+# See docs/status.md and docs/experiment-plan.md for the current integration status.
 #
 # CV32E20 has a single configuration (cv32e20), so the matrix is one row.
 # Simulator options: dsim-cloud | spike-only | verilator (TBD — see doc above)

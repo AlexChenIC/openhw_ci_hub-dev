@@ -69,6 +69,19 @@ def load_runs(json_path: Path) -> list[dict]:
         return []
 
 
+def _resolve_config_path(config_ref: str, repos_config_path: Path) -> Path:
+    """Resolve config paths stored in repos.yml."""
+    path = Path(config_ref)
+    if path.is_absolute():
+        return path
+
+    config_dir = repos_config_path.resolve().parent
+    for candidate in (config_dir / path, config_dir.parent / path, Path.cwd() / path):
+        if candidate.exists():
+            return candidate
+    return config_dir.parent / path
+
+
 # ── Matrix building ───────────────────────────────────────────────────────
 
 def build_matrix(runs: list[dict],
@@ -147,7 +160,8 @@ def latest_run_summary(runs: list[dict]) -> dict | None:
 
 # ── Per-repo dashboard data assembly ─────────────────────────────────────
 
-def assemble_repo_data(repo_cfg: dict, data_dir: Path) -> dict:
+def assemble_repo_data(repo_cfg: dict, data_dir: Path,
+                       repos_config_path: Path) -> dict:
     owner = repo_cfg["owner"]
     repo  = repo_cfg["repo"]
     repo_data_dir = data_dir / owner / repo
@@ -156,10 +170,12 @@ def assemble_repo_data(repo_cfg: dict, data_dir: Path) -> dict:
     configs_order: list[str] = []
     suites_order: list[str]  = []
     matrix_cfg_path = repo_cfg.get("matrix_config", "")
-    if matrix_cfg_path and Path(matrix_cfg_path).exists():
-        mc = yaml.safe_load(Path(matrix_cfg_path).read_text())
-        configs_order = mc.get("known_configs", [])
-        suites_order  = mc.get("known_suites",  [])
+    if matrix_cfg_path:
+        matrix_path = _resolve_config_path(matrix_cfg_path, repos_config_path)
+        if matrix_path.exists():
+            mc = yaml.safe_load(matrix_path.read_text())
+            configs_order = mc.get("known_configs", [])
+            suites_order  = mc.get("known_suites",  [])
 
     workflows_data: list[dict] = []
     for wf_key, wf_file in repo_cfg.get("workflows", {}).items():
@@ -222,7 +238,8 @@ def main() -> None:
                     help="Override template directory (default: scripts/templates/)")
     args = ap.parse_args()
 
-    repos_cfg = yaml.safe_load(Path(args.repos_config).read_text())
+    repos_config_path = Path(args.repos_config)
+    repos_cfg = yaml.safe_load(repos_config_path.read_text())
     repos     = [r for r in repos_cfg.get("repos", []) if r.get("active", True)]
     data_dir  = Path(args.data_dir)
     output_dir = Path(args.output_dir)
@@ -241,7 +258,7 @@ def main() -> None:
     template = env.get_template("index.html")
 
     # Assemble per-repo data
-    repos_data = [assemble_repo_data(r, data_dir) for r in repos]
+    repos_data = [assemble_repo_data(r, data_dir, repos_config_path) for r in repos]
     overview   = build_overview(repos_data)
 
     # Render
