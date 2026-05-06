@@ -28,14 +28,14 @@ Validate the CI Hub approach for Flo's centralized CI management proposal:
 | CVA6 Tier 1 reusable workflow | Done | Supports script, testlist, and custom C test modes |
 | CVA6 Tier 2 reusable workflow | Done | Includes `hwconfig-opts` support for hwconfig/coremark jobs |
 | CVA6 thin wrapper examples | Done | Tier 1 and Tier 2 examples match the current CVA6 validation matrix |
-| Data persistence branch | Started | `gh-pages-ci-hub` exists and is updated by collection workflow |
+| Data persistence branch | Done | `gh-pages-ci-hub` exists and is updated by collection workflow |
+| Dashboard deploy workflow | Ready | Generates dashboard HTML; skips deployment cleanly when Pages is unavailable |
 
 ## Remaining Work
 
 | Priority | Task | Owner | Status | Exit Criteria |
 | --- | --- | --- | --- | --- |
-| P0 | Enable GitHub Pages for the hub repo | Repo admin | Blocked by private-repo plan | Pages URL serves the generated dashboard |
-| P0 | Re-run `collect-results.yml` after current fixes are pushed | Junchao | Open | Run succeeds and dispatches `deploy-dashboard.yml` |
+| P0 | Enable dashboard hosting for the hub repo | Repo admin | Blocked by private-repo plan | A stable URL serves the generated dashboard |
 | P0 | Decide hub visibility/access policy | Junchao/Flo | Open | Public target repos can call the reusable workflows |
 | P1 | Configure `DISPATCH_TOKEN` | Junchao | Open | `trigger-nightly.yml` can dispatch Tier 2 workflows |
 | P1 | Validate thin wrappers in a target CVA6 fork | Junchao | Open | A PR triggers Tier 1 via the hub reusable workflow |
@@ -62,4 +62,6 @@ Local verification on 2026-05-06:
 - latest collected CVA6 Tier 2 run: run `#10`, `22/22` jobs passed
 - `generate_dashboard.py` produced a static dashboard HTML with the CVA6 Tier 2 matrix
 - remote `collect-results.yml` run `25427007423` completed successfully and updated `gh-pages-ci-hub`
+- remote `deploy-dashboard.yml` run `25427133800` completed successfully; Pages deployment was skipped because Pages is unavailable
+- remote `trigger-nightly.yml` run `25427133849` completed successfully; CVA6 dispatch was skipped because `DISPATCH_TOKEN` is not configured
 - GitHub Pages enablement failed with plan limitation for the current private repository

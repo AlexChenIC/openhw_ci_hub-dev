@@ -19,9 +19,9 @@ The experiment is considered complete when all of the following are true:
 
 | Milestone | Target Result | Current State |
 | --- | --- | --- |
-| M1: CVA6 dashboard aggregation | Collect current CVA6 tier CI data into hub dashboard | Data collection complete; hosted Pages blocked by private-repo plan |
+| M1: CVA6 dashboard aggregation | Collect current CVA6 tier CI data into hub dashboard | Data collection and HTML generation complete; hosted Pages blocked by private-repo plan |
 | M2: CVA6 thin-wrapper execution | PR in target repo calls hub Tier 1 workflow | Wrapper examples ready; target repo access/visibility must be decided |
-| M3: Nightly management flow | Hub can start CVA6 Tier 2 on schedule | Workflow ready; blocked by missing `DISPATCH_TOKEN` |
+| M3: Nightly management flow | Hub can start CVA6 Tier 2 on schedule | Workflow ready; verified warning path while `DISPATCH_TOKEN` is missing |
 | M4: Second-repo readiness | CV32E20 has a selected simulator route | Not complete |
 | M5: Management demo package | Dashboard URL, architecture note, task/risk status | In progress |
 
