@@ -34,7 +34,7 @@ Validate the CI Hub approach for Flo's centralized CI management proposal:
 
 | Priority | Task | Owner | Status | Exit Criteria |
 | --- | --- | --- | --- | --- |
-| P0 | Enable GitHub Pages for the hub repo | Repo admin | Open | Pages URL serves the generated dashboard |
+| P0 | Enable GitHub Pages for the hub repo | Repo admin | Blocked by private-repo plan | Pages URL serves the generated dashboard |
 | P0 | Re-run `collect-results.yml` after current fixes are pushed | Junchao | Open | Run succeeds and dispatches `deploy-dashboard.yml` |
 | P0 | Decide hub visibility/access policy | Junchao/Flo | Open | Public target repos can call the reusable workflows |
 | P1 | Configure `DISPATCH_TOKEN` | Junchao | Open | `trigger-nightly.yml` can dispatch Tier 2 workflows |
@@ -48,6 +48,7 @@ Validate the CI Hub approach for Flo's centralized CI management proposal:
 | --- | --- | --- |
 | Hub repo is private while target CVA6 validation repo is public | Public callers may not be able to call private reusable workflows | Make the hub public for the pilot, or test thin wrappers from a private caller repo |
 | GitHub Pages is not enabled | Dashboard cannot be published | Enable Pages with GitHub Actions as the source |
+| Private repo plan does not support Pages | Dashboard deployment cannot be hosted from this repo while private | Make the pilot repo public or move it to an account/organization plan that supports private Pages |
 | `DISPATCH_TOKEN` missing | Nightly dispatch cannot start target workflows | Add PAT/fine-grained token with workflow permission |
 | CV32E20 lacks a free RTL simulator path | Second-repo demo may be delayed | Use Spike-only as a management/demo fallback or evaluate DSim Cloud |
 
@@ -60,3 +61,5 @@ Local verification on 2026-05-06:
 - `collect_all_repos.py` collected live data from `AlexChenIC/cva6-tier-ci-test-20260427`
 - latest collected CVA6 Tier 2 run: run `#10`, `22/22` jobs passed
 - `generate_dashboard.py` produced a static dashboard HTML with the CVA6 Tier 2 matrix
+- remote `collect-results.yml` run `25427007423` completed successfully and updated `gh-pages-ci-hub`
+- GitHub Pages enablement failed with plan limitation for the current private repository

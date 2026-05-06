@@ -19,7 +19,7 @@ The experiment is considered complete when all of the following are true:
 
 | Milestone | Target Result | Current State |
 | --- | --- | --- |
-| M1: CVA6 dashboard aggregation | Collect current CVA6 tier CI data into hub dashboard | Mostly complete; needs pushed fix and Pages enablement |
+| M1: CVA6 dashboard aggregation | Collect current CVA6 tier CI data into hub dashboard | Data collection complete; hosted Pages blocked by private-repo plan |
 | M2: CVA6 thin-wrapper execution | PR in target repo calls hub Tier 1 workflow | Wrapper examples ready; target repo access/visibility must be decided |
 | M3: Nightly management flow | Hub can start CVA6 Tier 2 on schedule | Workflow ready; blocked by missing `DISPATCH_TOKEN` |
 | M4: Second-repo readiness | CV32E20 has a selected simulator route | Not complete |
@@ -37,7 +37,7 @@ The experiment is considered complete when all of the following are true:
 
 | Workstream | Remaining Effort | Notes |
 | --- | --- | --- |
-| Dashboard aggregation for CVA6 | 0.5 day | Push fixes, enable Pages, run collection/deploy once |
+| Dashboard aggregation for CVA6 | 0.25-0.5 day | Data flow is working; hosted dashboard needs Pages support or public repo visibility |
 | CVA6 thin-wrapper validation | 0.5-1 day | Depends on repo visibility/access policy |
 | Nightly dispatch | 0.25 day | Add `DISPATCH_TOKEN` and run manual dispatch test |
 | CV32E20 simulator decision | 1-2 days | Investigation and decision, not implementation |

@@ -32,6 +32,8 @@ jobs:
   build:
     name: Build Dashboard
     runs-on: ubuntu-latest
+    outputs:
+      pages-enabled: ${{ steps.pages.outputs.enabled }}
 
     steps:
       - name: Checkout ci-hub (scripts + config)
@@ -57,7 +59,20 @@ jobs:
             --data-dir     data-store/data \
             --output-dir   site
 
+      - name: Check GitHub Pages availability
+        id: pages
+        run: |
+          if gh api "repos/${{ github.repository }}/pages" >/dev/null 2>&1; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning title=GitHub Pages unavailable::Dashboard HTML was generated, but Pages is not enabled or not supported for this repository plan."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload Pages artifact
+        if: steps.pages.outputs.enabled == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
@@ -65,6 +80,7 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
     needs: build
+    if: needs.build.outputs.pages-enabled == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
