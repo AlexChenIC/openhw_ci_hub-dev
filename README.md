@@ -4,7 +4,7 @@
 
 This repository provides **reusable GitHub Actions workflows**, a **shared composite action** for RISC-V tool setup, and a **unified CI Dashboard** that aggregates results across multiple OpenHW repositories.
 
-**Dashboard target**: https://AlexChenIC.github.io/openhw_ci_hub-dev/
+**Dashboard**: https://alexchenic.github.io/openhw_ci_hub-dev/
 
 ---
 
@@ -28,7 +28,7 @@ Each target repository needs only a **thin wrapper** (~15 lines of YAML) that ca
 
 | Repository | Tier 1 (PR Gate) | Tier 2 (Nightly) | Notes |
 |------------|-----------------|-----------------|-------|
-| `AlexChenIC/cva6-tier-ci-test-20260427` | ✅ | ✅ | Current CVA6 tier CI validation repo |
+| `AlexChenIC/cva6-tier-ci-test-20260427` | ✅ | ✅ | Current CVA6 tier CI validation repo; hub smoke workflow validated |
 | `AlexChenIC/cv32e20-dv` | ⚙️ | ⚙️ | CV32E20 DV env (simulator TBD) |
 
 To add a new repository, see [docs/adding-new-repo.md](docs/adding-new-repo.md).
@@ -153,8 +153,9 @@ ci-hub/
 
 - [x] CVA6 data collection from the current tier CI validation repository
 - [x] CVA6 dashboard generation from live GitHub Actions data
-- [ ] GitHub Pages enablement and first hosted dashboard deployment
-- [ ] CVA6 thin-wrapper execution validation from a target repository
+- [x] GitHub Pages enablement and first hosted dashboard deployment
+- [x] CVA6 reusable workflow access validation from a target repository
+- [ ] CVA6 full Tier 1 thin-wrapper PR validation from a target repository
 - [ ] Nightly Tier 2 dispatch with `DISPATCH_TOKEN`
 - [ ] CV32E20-DV simulator decision and integration plan
 - [ ] Proposal for organization-level CI Hub adoption

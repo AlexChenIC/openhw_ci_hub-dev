@@ -19,8 +19,8 @@ The experiment is considered complete when all of the following are true:
 
 | Milestone | Target Result | Current State |
 | --- | --- | --- |
-| M1: CVA6 dashboard aggregation | Collect current CVA6 tier CI data into hub dashboard | Data collection and HTML generation complete; hosted Pages blocked by private-repo plan |
-| M2: CVA6 thin-wrapper execution | PR in target repo calls hub Tier 1 workflow | Wrapper examples ready; target repo access/visibility must be decided |
+| M1: CVA6 dashboard aggregation | Collect current CVA6 tier CI data into hub dashboard | Complete; dashboard published from GitHub Pages |
+| M2: CVA6 thin-wrapper execution | PR in target repo calls hub Tier 1 workflow | Access smoke complete; full Tier 1 PR wrapper still pending |
 | M3: Nightly management flow | Hub can start CVA6 Tier 2 on schedule | Workflow ready; verified warning path while `DISPATCH_TOKEN` is missing |
 | M4: Second-repo readiness | CV32E20 has a selected simulator route | Not complete |
 | M5: Management demo package | Dashboard URL, architecture note, task/risk status | In progress |
@@ -32,17 +32,18 @@ The experiment is considered complete when all of the following are true:
 | 2026-05-06 | Use `AlexChenIC/cva6-tier-ci-test-20260427` as the active CVA6 data source | It contains the current working CVA6 Tier 1/Tier 2 workflows and dashboard validation history |
 | 2026-05-06 | Keep CV32E20 inactive until simulator route is chosen | The current DV flow depends on simulator capability that is not yet settled |
 | 2026-05-06 | Treat missing `DISPATCH_TOKEN` as a warning in nightly trigger | Data/dashboard validation should not fail because dispatch credentials are not configured yet |
+| 2026-05-06 | Make `AlexChenIC/openhw_ci_hub-dev` public for the pilot | Public CVA6 validation repos need access to hub reusable workflows |
 
 ## Completion Estimate
 
 | Workstream | Remaining Effort | Notes |
 | --- | --- | --- |
-| Dashboard aggregation for CVA6 | 0.25-0.5 day | Data flow is working; hosted dashboard needs Pages support or public repo visibility |
-| CVA6 thin-wrapper validation | 0.5-1 day | Depends on repo visibility/access policy |
+| Dashboard aggregation for CVA6 | Complete | Data collection and hosted dashboard are working |
+| CVA6 thin-wrapper validation | 0.25-0.5 day | Access smoke is working; remaining step is a full Tier 1 PR wrapper run |
 | Nightly dispatch | 0.25 day | Add `DISPATCH_TOKEN` and run manual dispatch test |
 | CV32E20 simulator decision | 1-2 days | Investigation and decision, not implementation |
 | CV32E20 first integration | 2-5 days | Depends heavily on simulator choice |
 
 ## Recommended Next Step
 
-Complete M1 and M2 first. They prove the central management concept without waiting for CV32E20 simulator uncertainty.
+Complete the full Tier 1 PR-wrapper validation next. It proves the central management concept without waiting for CV32E20 simulator uncertainty.

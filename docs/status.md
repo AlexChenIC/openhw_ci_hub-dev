@@ -29,16 +29,17 @@ Validate the CI Hub approach for Flo's centralized CI management proposal:
 | CVA6 Tier 2 reusable workflow | Done | Includes `hwconfig-opts` support for hwconfig/coremark jobs |
 | CVA6 thin wrapper examples | Done | Tier 1 and Tier 2 examples match the current CVA6 validation matrix |
 | Data persistence branch | Done | `gh-pages-ci-hub` exists and is updated by collection workflow |
-| Dashboard deploy workflow | Ready | Generates dashboard HTML; skips deployment cleanly when Pages is unavailable |
+| Dashboard deploy workflow | Done | Publishes https://alexchenic.github.io/openhw_ci_hub-dev/ |
+| CVA6 reusable workflow access smoke | Done | `openhw-ci-hub-smoke.yml` in the CVA6 validation repo calls the hub Tier 1 workflow |
 
 ## Remaining Work
 
 | Priority | Task | Owner | Status | Exit Criteria |
 | --- | --- | --- | --- | --- |
-| P0 | Enable dashboard hosting for the hub repo | Repo admin | Blocked by private-repo plan | A stable URL serves the generated dashboard |
-| P0 | Decide hub visibility/access policy | Junchao/Flo | Open | Public target repos can call the reusable workflows |
+| P0 | Enable dashboard hosting for the hub repo | Repo admin | Done | A stable URL serves the generated dashboard |
+| P0 | Decide hub visibility/access policy | Junchao/Flo | Done for pilot | Public target repos can call the reusable workflows |
 | P1 | Configure `DISPATCH_TOKEN` | Junchao | Open | `trigger-nightly.yml` can dispatch Tier 2 workflows |
-| P1 | Validate thin wrappers in a target CVA6 fork | Junchao | Open | A PR triggers Tier 1 via the hub reusable workflow |
+| P1 | Validate full Tier 1 wrapper in a target CVA6 fork | Junchao | Open | A PR triggers full Tier 1 via the hub reusable workflow |
 | P2 | Decide CV32E20 simulator route | Junchao/Flo | Open | DSim, Spike-only, or Verilator path selected |
 | P2 | Add CV32E20 to dashboard | Junchao | Blocked | CV32E20 entry is active and has at least one collected run |
 
@@ -46,9 +47,7 @@ Validate the CI Hub approach for Flo's centralized CI management proposal:
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
-| Hub repo is private while target CVA6 validation repo is public | Public callers may not be able to call private reusable workflows | Make the hub public for the pilot, or test thin wrappers from a private caller repo |
-| GitHub Pages is not enabled | Dashboard cannot be published | Enable Pages with GitHub Actions as the source |
-| Private repo plan does not support Pages | Dashboard deployment cannot be hosted from this repo while private | Make the pilot repo public or move it to an account/organization plan that supports private Pages |
+| Hub repo visibility changes after the pilot | Public callers may lose access to reusable workflows | Keep hub public for public target repos, or move callers and hub under compatible private access policy |
 | `DISPATCH_TOKEN` missing | Nightly dispatch cannot start target workflows | Add PAT/fine-grained token with workflow permission |
 | CV32E20 lacks a free RTL simulator path | Second-repo demo may be delayed | Use Spike-only as a management/demo fallback or evaluate DSim Cloud |
 
@@ -65,3 +64,8 @@ Local verification on 2026-05-06:
 - remote `deploy-dashboard.yml` run `25427133800` completed successfully; Pages deployment was skipped because Pages is unavailable
 - remote `trigger-nightly.yml` run `25427133849` completed successfully; CVA6 dispatch was skipped because `DISPATCH_TOKEN` is not configured
 - GitHub Pages enablement failed with plan limitation for the current private repository
+- hub repository was made public for the pilot
+- remote `collect-results.yml` run `25431051842` completed successfully and triggered dashboard deployment
+- remote `deploy-dashboard.yml` run `25431065768` completed successfully and published the dashboard
+- dashboard URL returns HTTP 200: https://alexchenic.github.io/openhw_ci_hub-dev/
+- CVA6 target repo smoke run `25431150116` completed successfully through the hub reusable workflow
