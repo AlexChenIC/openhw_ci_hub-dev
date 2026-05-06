@@ -103,6 +103,16 @@ on:
         type: number
         default: 8
 
+      install-tools:
+        description: 'Install missing simulation tools during setup'
+        type: boolean
+        default: true
+
+      validate-only:
+        description: 'Validate reusable workflow wiring without running simulation'
+        type: boolean
+        default: false
+
       hwconfig-opts:
         description: 'Optional DV_HWCONFIG_OPTS value for hwconfig-based script tests'
         type: string
@@ -130,10 +140,22 @@ jobs:
       - name: Setup RISC-V Environment
         uses: AlexChenIC/openhw_ci_hub-dev/.github/actions/setup-riscv-env@main
         with:
-          install-tools: 'true'
+          install-tools: ${{ inputs.install-tools && 'true' || 'false' }}
+
+      - name: Validate caller repository
+        if: ${{ inputs.validate-only }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d ci
+          test -d verif/sim
+          test -d verif/regress
+          test -f "verif/regress/${{ inputs.testcase }}.sh"
+          echo "Reusable workflow validation passed for ${{ inputs.target }} / ${{ inputs.testcase }}."
 
       # ── Prerequisites (arch-test, compliance, etc.) ───────────────────────
       - name: Install CI prerequisites
+        if: ${{ ! inputs.validate-only }}
         shell: bash
         run: |
           set -euo pipefail
@@ -141,6 +163,7 @@ jobs:
 
       # ── Test execution ─────────────────────────────────────────────────────
       - name: "Run ${{ inputs.target }} / ${{ inputs.testcase }}"
+        if: ${{ ! inputs.validate-only }}
         shell: bash
         run: |
           set -x
